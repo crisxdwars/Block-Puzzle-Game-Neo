@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" ondragstart="return false" oncontextmenu="return false">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Block Puzzle Game</title>
+<link rel="stylesheet" href="Game-style.css">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- GAME SCREEN -->
+<div class="screen active" id="game-screen">
+  <div class="game-wrapper">
+    <div style="display:flex;justify-content:space-between;width:100%;max-width:590px;align-items:center">
+      <div class="game-title">BLOCK PUZZLE <span>GAME</span></div>
+      <button class="btn-home" onclick="goToHome()">⏎ Home</button>
+    </div>
+    <div class="game-row">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Score</div>
+          <div class="panel-value" id="score">0</div>
+          <div class="panel-sub">Points</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Lines</div>
+          <div class="panel-value" id="lines">0</div>
+          <div class="panel-sub">Cleared</div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Level</div>
+          <div class="panel-value" id="level">1</div>
+          <div class="panel-sub">Speed ↑</div>
+        </div>
+      </div>
+      
+      <div class="board-wrap" id="board-wrap">
+        <div id="game-board"></div>
+        <div class="overlay hidden" id="start-overlay">
+          <h2>READY?</h2>
+          <p>Press Start to begin<br/>the challenge!</p>
+          <button class="btn-start" onclick="startGame()">START</button>
+        </div>
+        <div class="overlay hidden" id="gameover-overlay">
+          <h2 class="gameover">GAME OVER</h2>
+          <p id="go-reason" style="color:var(--neon-pink);font-size:.68rem"></p>
+          <p style="margin-bottom:6px">Score: <span id="go-score" style="color:#fff;font-weight:bold">0</span> &nbsp; Lines: <span id="go-lines" style="color:#fff">0</span></p>
+          <p style="font-size:.62rem;color:var(--neon-green);margin-bottom:12px">Score automatically saved to leaderboard!</p>
+          <button class="btn-start" onclick="startGame()">Restart</button>
+        </div>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="panel">
+          <div class="panel-title">Next</div>
+          <div id="next-board"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Difficulty</div>
+          <div class="diff-badge" id="diff-badge">EASY</div>
+        </div>
+        <div class="panel controls-panel">
+          <div class="panel-title">Controls</div>
+          <div class="ctrl-row"><span class="ctrl-key">←→</span> Move</div>
+          <div class="ctrl-row"><span class="ctrl-key">↑</span> Rotate</div>
+          <div class="ctrl-row"><span class="ctrl-key">↓</span> Soft Drop</div>
+          <div class="ctrl-row"><span class="ctrl-key">Spc</span> Hard Drop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="quiz-overlay hidden" id="quiz-overlay">
+  <div class="quiz-modal">
+    <div class="quiz-header">
+      <div class="diff-badge quiz-diff-badge" id="quiz-diff-badge">EASY</div>
+      <div class="timer-ring">
+        <svg width="40" height="40" viewBox="0 0 42 42">
+          <circle class="timer-ring-bg" cx="21" cy="21" r="18"/>
+          <circle class="timer-ring-fg" id="timer-ring-fg" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-ring-text" id="timer-ring-text">10</div>
+      </div>
+    </div>
+    <div class="quiz-question" id="quiz-question"></div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-result" id="quiz-result"></div>
+  </div>
+</div>
+
+<script src="Database.js"></script>
+<script src="Game-script.js"></script>
+</body>
+</html>

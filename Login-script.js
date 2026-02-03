@@ -1,0 +1,207 @@
+// ═══════════════════════════════════════════════
+//  LOGIN SCRIPT
+// ═══════════════════════════════════════════════
+
+// Tab switching
+window.switchTab = function(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+  
+  // Clear errors
+  document.querySelectorAll('.form-error, .form-success').forEach(e => e.classList.remove('show'));
+  
+  if (tab === 'login') {
+    document.querySelectorAll('.auth-tab')[0].classList.add('active');
+    document.getElementById('login-form').classList.add('active');
+  } else {
+    document.querySelectorAll('.auth-tab')[1].classList.add('active');
+    document.getElementById('signup-form').classList.add('active');
+  }
+};
+
+// Login handler
+window.handleLogin = async function(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('login-email').value.trim();
+  const btn = document.getElementById('login-btn');
+  
+  btn.disabled = true;
+  btn.textContent = 'LOGGING IN...';
+  
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const user = DB.users.findByEmail(email);
+  
+  if (!user) {
+    showError('login-error', 'Account not found. Please sign up first.');
+    btn.disabled = false;
+    btn.textContent = 'LOGIN';
+    return;
+  }
+  
+  // Set session
+  DB.session.set(user);
+  
+  btn.textContent = 'SUCCESS!';
+  setTimeout(() => {
+    btn.textContent = 'LOGIN';
+    btn.disabled = false;
+    // Redirect to home page
+    window.location.href = 'Home-index.html';
+  }, 300);
+};
+
+// Signup handler
+window.handleSignup = async function(e) {
+  e.preventDefault();
+  
+  const name = document.getElementById('signup-name').value.trim();
+  const strand = document.getElementById('signup-strand').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const btn = document.getElementById('signup-btn');
+  
+  if (!email.endsWith('@gmail.com')) {
+    showError('signup-error', 'Please use a Gmail account (@gmail.com)');
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = 'CREATING ACCOUNT...';
+  
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  if (DB.users.findByEmail(email)) {
+    showError('signup-error', 'This email is already registered. Please login.');
+    btn.disabled = false;
+    btn.textContent = 'CREATE ACCOUNT';
+    return;
+  }
+  
+  // Create user
+  const newUser = DB.users.create({ name, strand, email });
+  
+  // Set session
+  DB.session.set(newUser);
+  
+  showSuccess('signup-success', 'Account created successfully!');
+  btn.textContent = 'SUCCESS!';
+  
+  setTimeout(() => {
+    btn.textContent = 'CREATE ACCOUNT';
+    btn.disabled = false;
+    // Redirect to home page
+    window.location.href = 'Home-index.html';
+  }, 800);
+};
+
+// Helper functions
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
+}
+
+function showSuccess(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ═══════════════════════════════════════════════
+//  CANVAS ANIMATION
+// ═══════════════════════════════════════════════
+function initCanvas(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  
+  const ctx = canvas.getContext('2d');
+  let blocks = [];
+  const COLORS = ['#00f0ff', '#ff2d95', '#39ff14', '#ffe600', '#ff6a00', '#bf00ff', '#0080ff'];
+  
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function spawnBlock() {
+    const size = 14 + Math.random() * 18;
+    blocks.push({
+      x: Math.random() * canvas.width,
+      y: -size,
+      size,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      speed: 0.4 + Math.random() * 0.7,
+      rot: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - .5) * .04,
+      opacity: .15 + Math.random() * .25
+    });
+  }
+  
+  for (let i = 0; i < 18; i++) {
+    spawnBlock();
+    blocks[i].y = Math.random() * canvas.height;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    blocks.forEach((b, i) => {
+      b.y += b.speed;
+      b.rot += b.rotSpeed;
+      if (b.y > canvas.height + b.size) {
+        blocks.splice(i, 1);
+        spawnBlock();
+        return;
+      }
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      ctx.globalAlpha = b.opacity;
+      ctx.fillStyle = b.color;
+      ctx.shadowColor = b.color;
+      ctx.shadowBlur = 8;
+      const s = b.size;
+      ctx.fillRect(-s / 2, -s / 2, s, s);
+      ctx.globalAlpha = b.opacity * .4;
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.fillRect(-s / 2, -s / 2, s, s * .18);
+      ctx.restore();
+    });
+    if (Math.random() < .04) spawnBlock();
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════════════
+//  INITIALIZE ON PAGE LOAD
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  const loadingOverlay = document.getElementById('loading-overlay');
+  
+  // Initialize canvas animation
+  initCanvas('auth-canvas');
+  
+  // Simulate database connection
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Check if already logged in
+  const session = DB.session.get();
+  if (session) {
+    const user = DB.users.findByEmail(session.email);
+    if (user) {
+      // User already logged in, redirect to home
+      window.location.href = 'Home-index.html';
+      return;
+    }
+  }
+  
+  // Show login screen
+  loadingOverlay.classList.add('hidden');
+});

@@ -40,14 +40,15 @@ USE block_puzzle_game;
 -- ============================================
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
     strand VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     games_played INT NOT NULL DEFAULT 0,
     total_score INT NOT NULL DEFAULT 0,
     high_score INT NOT NULL DEFAULT 0,
-    INDEX idx_email (email),
+    INDEX idx_username (username),
     INDEX idx_high_score (high_score DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -74,9 +75,8 @@ CREATE TABLE IF NOT EXISTS leaderboard (
     user_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
     strand VARCHAR(100) NOT NULL,
-    email VARCHAR(255) NOT NULL,
     score INT NOT NULL DEFAULT 0,
-    lines INT NOT NULL DEFAULT 0,
+    `lines` INT NOT NULL DEFAULT 0,
     level INT NOT NULL DEFAULT 1,
     difficulty ENUM('easy', 'medium', 'hard') NOT NULL DEFAULT 'easy',
     timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -123,12 +123,12 @@ define('DB_CHARSET', 'utf8mb4');     // Character set
 
 | Method | Action | Parameters | Description |
 |--------|--------|------------|-------------|
-| GET | `findByEmail` | `email` | Find user by email |
+| GET | `findByUsername` | `username` | Find user by username |
 | GET | `getAll` | - | Get all users |
 | GET | `current` | `session_token` | Get current user from session |
-| POST | `create` | `name`, `strand`, `email` | Create new user account |
-| POST | `login` | `email` | Login with email |
-| PUT | - | `email`, `session_token`, fields to update | Update user data |
+| POST | `create` | `username`, `name`, `strand`, `password` | Create new user account |
+| POST | `login` | `username`, `password` | Login with username and password |
+| PUT | - | `user_id`, `session_token`, fields to update | Update user data |
 | DELETE | - | `session_token` | Logout |
 
 ### Leaderboard API (`api/leaderboard.php`)
@@ -138,7 +138,7 @@ define('DB_CHARSET', 'utf8mb4');     // Character set
 | GET | `getTop` | `limit` (optional, default 10) | Get top scores (1 per user) |
 | GET | `getAll` | - | Get all scores (1 per user) |
 | GET | `getByUser` | `user_id` | Get user's high score |
-| POST | - | `user_id`, `name`, `strand`, `email`, `score`, `lines`, `level`, `difficulty`, `session_token` | Submit score |
+| POST | - | `user_id`, `name`, `strand`, `score`, `lines`, `level`, `difficulty`, `session_token` | Submit score |
 | DELETE | - | `score_id`, `session_token` | Delete own score |
 | PUT | `cleanup` | - | Clean up duplicate entries |
 
@@ -164,7 +164,8 @@ define('DB_CHARSET', 'utf8mb4');     // Character set
 ## Features
 
 ### Authentication
-- Email-based signup/login
+- Username + password signup/login
+- Passwords are securely hashed with bcrypt
 - Session-based authentication (7-day expiry)
 - Automatic session validation
 
@@ -196,7 +197,7 @@ define('DB_CHARSET', 'utf8mb4');     // Character set
 
 ## Security Considerations
 
-1. **Password Hashing**: In production, add password authentication
+1. **Password Security**: Passwords are hashed using PHP's `password_hash()` with bcrypt
 2. **HTTPS**: Use SSL/TLS in production
 3. **Input Validation**: All inputs are validated in the API
 4. **Session Security**: Session tokens are cryptographically secure random bytes
@@ -204,10 +205,9 @@ define('DB_CHARSET', 'utf8mb4');     // Character set
 
 ## Future Enhancements
 
-1. Add password authentication with bcrypt
-2. Implement email verification
-3. Add social login (Google OAuth)
-4. Real-time leaderboard with WebSocket
-5. User profiles and statistics
-6. Achievement system
-7. Multiplayer mode
+1. Add email verification
+2. Add social login (Google OAuth)
+3. Real-time leaderboard with WebSocket
+4. User profiles and statistics
+5. Achievement system
+6. Multiplayer mode

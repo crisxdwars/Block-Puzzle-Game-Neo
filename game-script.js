@@ -451,18 +451,19 @@ async function saveScoreToDatabase() {
     difficulty: getDifficultyLabel()
   };
   
-  // Save to leaderboard
-  DB.leaderboard.add(scoreData);
-  
-  // Update user stats
-  const updatedUser = DB.users.update(currentUser.email, {
-    gamesPlayed: (currentUser.gamesPlayed || 0) + 1,
-    totalScore: (currentUser.totalScore || 0) + score,
-    highScore: Math.max(currentUser.highScore || 0, score)
-  });
-  
-  if (updatedUser) {
-    currentUser = updatedUser;
+  try {
+    // Save to leaderboard (keeps only highest score per user)
+    const result = await DB.leaderboard.add(scoreData);
+    console.log('Score saved:', result);
+    
+    // Update current user stats from response
+    if (currentUser.highScore < score) {
+      currentUser.highScore = score;
+    }
+    currentUser.gamesPlayed = (currentUser.gamesPlayed || 0) + 1;
+    currentUser.totalScore = (currentUser.totalScore || 0) + score;
+  } catch (error) {
+    console.error('Failed to save score:', error);
   }
 }
 

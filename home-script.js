@@ -42,31 +42,33 @@ async function renderLeaderboard() {
   const tbody = document.getElementById('lb-body');
   tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">Loading...</td></tr>';
   
-  // Simulate loading delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const scores = DB.leaderboard.getTop(10);
-  
-  tbody.innerHTML = '';
-  
-  if (!scores.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">No scores yet — play the game!</td></tr>';
-    return;
-  }
-  
-  scores.forEach((score, i) => {
-    const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
-    const diffClass = score.difficulty || 'easy';
+  try {
+    const scores = await DB.leaderboard.getTop(10);
     
-    tbody.innerHTML += `
-      <tr>
-        <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
-        <td>${escHtml(score.name)}</td>
-        <td style="font-size:.64rem">${escHtml(score.strand || 'N/A')}</td>
-        <td><span class="lb-diff ${diffClass}">${(score.difficulty || 'easy').toUpperCase()}</span> · ${score.lines || 0}L</td>
-        <td>${score.score}</td>
-      </tr>`;
-  });
+    tbody.innerHTML = '';
+    
+    if (!scores || !scores.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">No scores yet — play the game!</td></tr>';
+      return;
+    }
+    
+    scores.forEach((score, i) => {
+      const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
+      const diffClass = score.difficulty || 'easy';
+      
+      tbody.innerHTML += `
+        <tr>
+          <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
+          <td>${escHtml(score.name)}</td>
+          <td style="font-size:.64rem">${escHtml(score.strand || 'N/A')}</td>
+          <td><span class="lb-diff ${diffClass}">${(score.difficulty || 'easy').toUpperCase()}</span> · ${score.lines || 0}L</td>
+          <td>${score.score}</td>
+        </tr>`;
+    });
+  } catch (error) {
+    console.error('Failed to load leaderboard:', error);
+    tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">Failed to load leaderboard</td></tr>';
+  }
 }
 
 function escHtml(s) {

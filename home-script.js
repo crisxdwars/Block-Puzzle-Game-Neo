@@ -8,7 +8,7 @@ let currentUser = null;
 //  NAVIGATION FUNCTIONS
 // ═══════════════════════════════════════════════
 window.goToGame = function() {
-  window.location.href = 'Game-index.html';
+  window.location.href = 'game-index.html';
 };
 
 window.openHTP = function() {
@@ -230,26 +230,41 @@ function initCanvas(canvasId) {
 window.addEventListener('DOMContentLoaded', async () => {
   // Check authentication
   const session = DB.session.get();
+  console.log('Session found:', session);
+  
   if (!session) {
+    console.log('No session found, redirecting to login');
     // Not logged in, redirect to login
     window.location.href = 'Login.html';
     return;
   }
   
-  const user = DB.users.findByEmail(session.email);
-  if (!user) {
-    // User not found, clear session and redirect
+  try {
+    const user = await DB.users.getCurrentUser();
+    console.log('User retrieved:', user);
+    
+    if (!user) {
+      console.log('User not found, clearing session');
+      // User not found, clear session and redirect
+      DB.session.clear();
+      window.location.href = 'Login.html';
+      return;
+    }
+    
+    // Set current user
+    currentUser = user;
+    
+    // Hide loading overlay
+    document.getElementById('loading-overlay').classList.add('hidden');
+    
+    // Update welcome message
+    document.getElementById('home-welcome').textContent = `Welcome, ${currentUser.name}!`;
+    
+    // Initialize canvas animation
+    initCanvas('home-canvas');
+  } catch (error) {
+    console.error('Session validation failed:', error);
     DB.session.clear();
     window.location.href = 'Login.html';
-    return;
   }
-  
-  // Set current user
-  currentUser = user;
-  
-  // Update welcome message
-  document.getElementById('home-welcome').textContent = `Welcome, ${currentUser.name}!`;
-  
-  // Initialize canvas animation
-  initCanvas('home-canvas');
 });

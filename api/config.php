@@ -1,9 +1,9 @@
 <?php
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'block_puzzle_game');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', 'sql207.infinityfree.com');
+define('DB_NAME', 'if0_41090756_chrs');
+define('DB_USER', 'if0_41090756');
+define('DB_PASS', 'lnK0B9Uughdu1I');
 define('DB_CHARSET', 'utf8mb4');
 
 function getDBConnection() {

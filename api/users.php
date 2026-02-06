@@ -15,19 +15,19 @@ $method = $_SERVER['REQUEST_METHOD'];
 $db = getDBConnection();
 
 /**
- * Get all users (admin only)
+ * Get user by username
  */
 if ($method === 'GET') {
     $action = $_GET['action'] ?? '';
     
-    if ($action === 'findByEmail') {
-        $email = $_GET['email'] ?? '';
-        if (empty($email)) {
-            jsonResponse(['error' => 'Email is required'], 400);
+    if ($action === 'findByUsername') {
+        $username = $_GET['username'] ?? '';
+        if (empty($username)) {
+            jsonResponse(['error' => 'Username is required'], 400);
         }
         
-        $stmt = $db->prepare('SELECT id, name, strand, email, created_at, games_played, total_score, high_score FROM users WHERE LOWER(email) = LOWER(?)');
-        $stmt->execute([$email]);
+        $stmt = $db->prepare('SELECT id, username, name, strand, created_at, games_played, total_score, high_score FROM users WHERE LOWER(username) = LOWER(?)');
+        $stmt->execute([$username]);
         $user = $stmt->fetch();
         
         if ($user) {
@@ -36,7 +36,7 @@ if ($method === 'GET') {
             jsonResponse(['error' => 'User not found'], 404);
         }
     } elseif ($action === 'getAll') {
-        $stmt = $db->query('SELECT id, name, strand, email, created_at, games_played, total_score, high_score FROM users ORDER BY created_at DESC');
+        $stmt = $db->query('SELECT id, username, name, strand, created_at, games_played, total_score, high_score FROM users ORDER BY created_at DESC');
         jsonResponse($stmt->fetchAll());
     } elseif ($action === 'current') {
         // Get current user from session/token
@@ -46,7 +46,7 @@ if ($method === 'GET') {
         }
         
         $stmt = $db->prepare('
-            SELECT u.id, u.name, u.strand, u.email, u.created_at, u.games_played, u.total_score, u.high_score 
+            SELECT u.id, u.username, u.name, u.strand, u.created_at, u.games_played, u.total_score, u.high_score 
             FROM users u
             INNER JOIN sessions s ON u.id = s.user_id
             WHERE s.session_token = ? AND s.expires_at > NOW()
@@ -60,7 +60,7 @@ if ($method === 'GET') {
             jsonResponse(['error' => 'Invalid or expired session'], 401);
         }
     } else {
-        jsonResponse(['error' => 'Invalid action. Use: findByEmail, getAll, or current'], 400);
+        jsonResponse(['error' => 'Invalid action. Use: findByUsername, getAll, or current'], 400);
     }
 }
 
@@ -74,31 +74,39 @@ if ($method === 'POST') {
         $data = getJSONInput();
         
         // Validate required fields
-        $required = ['name', 'strand', 'email'];
+        $required = ['username', 'name', 'strand', 'password'];
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 jsonResponse(['error' => "Missing required field: $field"], 400);
             }
         }
         
-        // Validate email format
-        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            jsonResponse(['error' => 'Invalid email format'], 400);
+        // Validate username format (alphanumeric, 3-20 chars)
+        if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $data['username'])) {
+            jsonResponse(['error' => 'Username must be 3-20 characters and contain only letters, numbers, and underscores'], 400);
         }
         
-        // Check if email already exists
-        $stmt = $db->prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?)');
-        $stmt->execute([$data['email']]);
-        if ($stmt->fetch()) {
-            jsonResponse(['error' => 'Email already registered'], 409);
+        // Validate password length
+        if (strlen($data['password']) < 6) {
+            jsonResponse(['error' => 'Password must be at least 6 characters'], 400);
         }
+        
+        // Check if username already exists
+        $stmt = $db->prepare('SELECT id FROM users WHERE LOWER(username) = LOWER(?)');
+        $stmt->execute([$data['username']]);
+        if ($stmt->fetch()) {
+            jsonResponse(['error' => 'Username already taken'], 409);
+        }
+        
+        // Hash password
+        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
         
         // Insert new user
         $stmt = $db->prepare('
-            INSERT INTO users (name, strand, email, created_at, games_played, total_score, high_score)
-            VALUES (?, ?, ?, NOW(), 0, 0, 0)
+            INSERT INTO users (username, name, strand, password, created_at, games_played, total_score, high_score)
+            VALUES (?, ?, ?, ?, NOW(), 0, 0, 0)
         ');
-        $stmt->execute([$data['name'], $data['strand'], $data['email']]);
+        $stmt->execute([$data['username'], $data['name'], $data['strand'], $passwordHash]);
         $userId = $db->lastInsertId();
         
         // Generate session token
@@ -109,28 +117,37 @@ if ($method === 'POST') {
         ');
         $stmt->execute([$userId, $sessionToken]);
         
-        // Return user data with session token
-        $stmt = $db->prepare('SELECT id, name, strand, email, created_at, games_played, total_score, high_score FROM users WHERE id = ?');
+        // Return user data with session token (exclude password)
+        $stmt = $db->prepare('SELECT id, username, name, strand, created_at, games_played, total_score, high_score FROM users WHERE id = ?');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
         $user['session_token'] = $sessionToken;
         
-        jsonResponse(['user' => $user, 'message' => 'User created successfully']);
+        jsonResponse(['user' => $user, 'message' => 'Account created successfully']);
     } elseif ($action === 'login') {
         $data = getJSONInput();
-        $email = $data['email'] ?? '';
+        $username = $data['username'] ?? '';
+        $password = $data['password'] ?? '';
         
-        if (empty($email)) {
-            jsonResponse(['error' => 'Email is required'], 400);
+        if (empty($username) || empty($password)) {
+            jsonResponse(['error' => 'Username and password required'], 400);
         }
         
-        $stmt = $db->prepare('SELECT id, name, strand, email, created_at, games_played, total_score, high_score FROM users WHERE LOWER(email) = LOWER(?)');
-        $stmt->execute([$email]);
+        $stmt = $db->prepare('SELECT id, username, name, strand, password, created_at, games_played, total_score, high_score FROM users WHERE LOWER(username) = LOWER(?)');
+        $stmt->execute([$username]);
         $user = $stmt->fetch();
         
         if (!$user) {
             jsonResponse(['error' => 'Account not found. Please sign up first.'], 404);
         }
+        
+        // Verify password
+        if (!password_verify($password, $user['password'])) {
+            jsonResponse(['error' => 'Invalid password'], 401);
+        }
+        
+        // Remove password from response
+        unset($user['password']);
         
         // Generate session token
         $sessionToken = bin2hex(random_bytes(32));
@@ -152,11 +169,11 @@ if ($method === 'POST') {
  */
 if ($method === 'PUT') {
     $data = getJSONInput();
-    $email = $data['email'] ?? '';
+    $userId = $data['user_id'] ?? '';
     $sessionToken = $data['session_token'] ?? '';
     
-    if (empty($email) || empty($sessionToken)) {
-        jsonResponse(['error' => 'Email and session token required'], 400);
+    if (empty($userId) || empty($sessionToken)) {
+        jsonResponse(['error' => 'User ID and session token required'], 400);
     }
     
     // Verify session
@@ -185,14 +202,14 @@ if ($method === 'PUT') {
         jsonResponse(['error' => 'No valid fields to update'], 400);
     }
     
-    $values[] = $email;
-    $sql = 'UPDATE users SET ' . implode(', ', $updates) . ' WHERE LOWER(email) = LOWER(?)';
+    $values[] = $userId;
+    $sql = 'UPDATE users SET ' . implode(', ', $updates) . ' WHERE id = ?';
     $stmt = $db->prepare($sql);
     $stmt->execute($values);
     
     // Return updated user
-    $stmt = $db->prepare('SELECT id, name, strand, email, created_at, games_played, total_score, high_score FROM users WHERE LOWER(email) = LOWER(?)');
-    $stmt->execute([$email]);
+    $stmt = $db->prepare('SELECT id, username, name, strand, created_at, games_played, total_score, high_score FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
     $user = $stmt->fetch();
     
     jsonResponse(['user' => $user, 'message' => 'User updated successfully']);

@@ -31,7 +31,7 @@ if ($method === 'GET') {
         
         // Get highest score per user
         $sql = '
-            SELECT l.id, l.user_id, l.name, l.strand, l.email, l.score, l.lines, l.level, l.difficulty, l.timestamp, l.date
+            SELECT l.id, l.user_id, l.name, l.strand, l.score, l.`lines`, l.level, l.difficulty, l.timestamp, l.date
             FROM leaderboard l
             INNER JOIN (
                 SELECT user_id, MAX(score) as max_score
@@ -47,7 +47,7 @@ if ($method === 'GET') {
     } elseif ($action === 'getAll') {
         // Get highest score per user
         $sql = '
-            SELECT l.id, l.user_id, l.name, l.strand, l.email, l.score, l.lines, l.level, l.difficulty, l.timestamp, l.date
+            SELECT l.id, l.user_id, l.name, l.strand, l.score, l.`lines`, l.level, l.difficulty, l.timestamp, l.date
             FROM leaderboard l
             INNER JOIN (
                 SELECT user_id, MAX(score) as max_score
@@ -85,7 +85,7 @@ if ($method === 'POST') {
     $data = getJSONInput();
     
     // Validate required fields
-    $required = ['user_id', 'name', 'strand', 'email', 'score', 'lines', 'level', 'difficulty'];
+    $required = ['user_id', 'name', 'strand', 'score', 'lines', 'level', 'difficulty'];
     foreach ($required as $field) {
         if (!isset($data[$field]) && $field !== 'lines' && $field !== 'level' && $field !== 'difficulty') {
             jsonResponse(['error' => "Missing required field: $field"], 400);
@@ -124,7 +124,7 @@ if ($method === 'POST') {
         if ($score > $existingScore['score']) {
             $stmt = $db->prepare('
                 UPDATE leaderboard 
-                SET score = ?, lines = ?, level = ?, difficulty = ?, timestamp = NOW(), date = CURDATE()
+                SET score = ?, `lines` = ?, level = ?, difficulty = ?, timestamp = NOW(), date = CURDATE()
                 WHERE id = ?
             ');
             $stmt->execute([$score, $data['lines'] ?? 0, $data['level'] ?? 1, $data['difficulty'] ?? 'easy', $existingScore['id']]);
@@ -148,14 +148,13 @@ if ($method === 'POST') {
     } else {
         // Insert new score
         $stmt = $db->prepare('
-            INSERT INTO leaderboard (user_id, name, strand, email, score, lines, level, difficulty, timestamp, date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), CURDATE())
+            INSERT INTO leaderboard (user_id, name, strand, score, `lines`, level, difficulty, timestamp, date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), CURDATE())
         ');
         $stmt->execute([
             $userId,
             $data['name'],
             $data['strand'],
-            $data['email'],
             $score,
             $data['lines'] ?? 0,
             $data['level'] ?? 1,

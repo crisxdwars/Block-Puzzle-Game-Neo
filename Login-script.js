@@ -20,11 +20,17 @@ window.switchTab = function(tab) {
 window.handleLogin = async function(e) {
   e.preventDefault();
   
-  const email = document.getElementById('login-email').value.trim();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
   const btn = document.getElementById('login-btn');
   
-  if (!email) {
-    showError('login-error', 'Please enter your email');
+  if (!username) {
+    showError('login-error', 'Please enter your username');
+    return;
+  }
+  
+  if (!password) {
+    showError('login-error', 'Please enter your password');
     return;
   }
   
@@ -32,10 +38,11 @@ window.handleLogin = async function(e) {
   btn.textContent = 'LOGGING IN...';
   
   try {
-    const result = await DB.users.login(email);
+    const result = await DB.users.login(username, password);
     
     DB.session.set({
-      email: result.user.email,
+      user_id: result.user.id,
+      username: result.user.username,
       session_token: result.user.session_token
     });
     
@@ -43,7 +50,7 @@ window.handleLogin = async function(e) {
     setTimeout(() => {
       btn.textContent = 'LOGIN';
       btn.disabled = false;
-      window.location.href = 'Home-index.html';
+      window.location.href = 'index.html';
     }, 300);
   } catch (error) {
     showError('login-error', error.message || 'Login failed. Please try again.');
@@ -55,18 +62,24 @@ window.handleLogin = async function(e) {
 window.handleSignup = async function(e) {
   e.preventDefault();
   
+  const username = document.getElementById('signup-username').value.trim();
   const name = document.getElementById('signup-name').value.trim();
   const strand = document.getElementById('signup-strand').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
   const btn = document.getElementById('signup-btn');
   
-  if (!name || !strand || !email) {
+  if (!username || !name || !strand || !password) {
     showError('signup-error', 'Please fill in all fields');
     return;
   }
   
-  if (!email.endsWith('@gmail.com')) {
-    showError('signup-error', 'Please use a Gmail account (@gmail.com)');
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+    showError('signup-error', 'Username must be 3-20 characters and contain only letters, numbers, and underscores');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showError('signup-error', 'Password must be at least 6 characters');
     return;
   }
   
@@ -74,21 +87,36 @@ window.handleSignup = async function(e) {
   btn.textContent = 'CREATING ACCOUNT...';
   
   try {
-    const result = await DB.users.create({ name, strand, email });
+    const result = await DB.users.create({ username, name, strand, password });
     
     DB.session.set({
-      email: result.user.email,
+      user_id: result.user.id,
+      username: result.user.username,
       session_token: result.user.session_token
     });
     
-    showSuccess('signup-success', 'Account created successfully!');
+    showSuccess('signup-success', 'Account created successfully! Your account has been created.');
     btn.textContent = 'SUCCESS!';
     
-    setTimeout(() => {
-      btn.textContent = 'CREATE ACCOUNT';
-      btn.disabled = false;
-      window.location.href = 'Home-index.html';
-    }, 800);
+    // Auto-login after signup
+    setTimeout(async () => {
+      btn.textContent = 'LOGGING IN...';
+      try {
+        const result = await DB.users.login(username, password);
+        DB.session.set({
+          user_id: result.user.id,
+          username: result.user.username,
+          session_token: result.user.session_token
+        });
+        window.location.href = 'index.html';
+      } catch (error) {
+        // If auto-login fails, redirect to login
+        btn.textContent = 'CREATE ACCOUNT';
+        btn.disabled = false;
+        switchTab('login');
+        showError('login-error', 'Signup successful! Please login with your new account.');
+      }
+    }, 1000);
   } catch (error) {
     showError('signup-error', error.message || 'Signup failed. Please try again.');
     btn.disabled = false;
@@ -196,7 +224,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     try {
       const valid = await DB.session.validate();
       if (valid) {
-        window.location.href = 'Home-index.html';
+        window.location.href = 'index.html';
         return;
       } else {
         DB.session.clear();

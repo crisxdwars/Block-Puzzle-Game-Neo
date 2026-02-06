@@ -18,10 +18,20 @@ async function apiCall(endpoint, options = {}) {
     
     try {
         const response = await fetch(url, config);
-        const data = await response.json();
+        const text = await response.text();
+        
+        // Try to parse as JSON
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            // If not JSON, show the raw response for debugging
+            console.error('API Error (non-JSON response):', text.substring(0, 500));
+            throw new Error(`API Error: ${response.status} ${response.statusText}. Check console for details.`);
+        }
         
         if (!response.ok) {
-            throw new Error(data.error || 'API request failed');
+            throw new Error(data.error || `API Error: ${response.status} ${response.statusText}`);
         }
         
         return data;
@@ -73,8 +83,8 @@ const DB = {
             return apiCall('users.php?action=getAll');
         },
         
-        async findByEmail(email) {
-            return apiCall(`users.php?action=findByEmail&email=${encodeURIComponent(email)}`);
+        async findByUsername(username) {
+            return apiCall(`users.php?action=findByUsername&username=${encodeURIComponent(username)}`);
         },
         
         async getCurrentUser() {
@@ -90,15 +100,15 @@ const DB = {
             });
         },
         
-        async login(email) {
+        async login(username, password) {
             return apiCall('users.php?action=login', {
                 method: 'POST',
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ username, password })
             });
         },
         
-        async update(email, updates, sessionToken) {
-            const data = { ...updates, email, session_token: sessionToken };
+        async update(userId, updates, sessionToken) {
+            const data = { ...updates, user_id: userId, session_token: sessionToken };
             return apiCall('users.php', {
                 method: 'PUT',
                 body: JSON.stringify(data)
@@ -147,7 +157,8 @@ const DB = {
     session: {
         set(userData) {
             localStorage.setItem('tq_current_session', JSON.stringify({
-                email: userData.email,
+                user_id: userData.user_id,
+                username: userData.username,
                 session_token: userData.session_token,
                 loginTime: new Date().toISOString()
             }));
@@ -196,5 +207,3 @@ const DB = {
 
 // Auto-initialize on load
 DB.init();
-
-console.log('Database initialized. API URL:', API_BASE_URL);

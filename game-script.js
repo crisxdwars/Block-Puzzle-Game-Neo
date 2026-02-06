@@ -441,10 +441,9 @@ async function saveScoreToDatabase() {
   if (!currentUser) return;
   
   const scoreData = {
-    userId: currentUser.id,
+    user_id: currentUser.id,
     name: currentUser.name,
     strand: currentUser.strand,
-    email: currentUser.email,
     score: score,
     lines: lines,
     level: level,
@@ -457,11 +456,11 @@ async function saveScoreToDatabase() {
     console.log('Score saved:', result);
     
     // Update current user stats from response
-    if (currentUser.highScore < score) {
-      currentUser.highScore = score;
+    if (currentUser.high_score < score) {
+      currentUser.high_score = score;
     }
-    currentUser.gamesPlayed = (currentUser.gamesPlayed || 0) + 1;
-    currentUser.totalScore = (currentUser.totalScore || 0) + score;
+    currentUser.games_played = (currentUser.games_played || 0) + 1;
+    currentUser.total_score = (currentUser.total_score || 0) + score;
   } catch (error) {
     console.error('Failed to save score:', error);
   }
@@ -473,7 +472,7 @@ async function saveScoreToDatabase() {
 window.goToHome = function() {
   if (confirm('Are you sure you want to exit the game?')) {
     pauseGame();
-    window.location.href = 'Home-index.html';
+    window.location.href = 'index.html';
   }
 };
 
@@ -488,7 +487,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   
-  const user = DB.users.findByEmail(session.email);
+  const user = await DB.users.getCurrentUser();
   if (!user) {
     DB.session.clear();
     window.location.href = 'Login.html';
@@ -496,6 +495,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   
   currentUser = user;
+  
+  // Hide loading overlay
+  document.getElementById('loading-overlay').classList.add('hidden');
   
   // Initialize game
   initBoard();

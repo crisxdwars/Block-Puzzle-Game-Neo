@@ -30,7 +30,7 @@ if ($method === 'GET') {
     }
     
     $stmt = $db->prepare('
-        SELECT s.id, s.user_id, s.created_at, s.expires_at, u.name, u.email
+        SELECT s.id, s.user_id, s.created_at, s.expires_at, u.name, u.username
         FROM sessions s
         INNER JOIN users u ON s.user_id = u.id
         WHERE s.session_token = ? AND s.expires_at > NOW()
@@ -42,8 +42,8 @@ if ($method === 'GET') {
         jsonResponse([
             'valid' => true,
             'user_id' => $session['user_id'],
+            'username' => $session['username'],
             'name' => $session['name'],
-            'email' => $session['email'],
             'expires_at' => $session['expires_at']
         ]);
     } else {

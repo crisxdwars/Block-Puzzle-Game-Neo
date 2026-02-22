@@ -100,5 +100,17 @@
 
 <script src="Database.js"></script>
 <script src="game-script.js"></script>
+<!-- HOME CONFIRMATION MODAL -->
+<div class="modal-overlay hidden" id="home-overlay">
+  <div class="home-modal">
+    <div class="modal-title">Exit Game</div>
+    <div class="htp-text">Are you sure you want to exit to home? Your current progress will be lost.</div>
+    <div class="modal-actions">
+      <button class="nav-btn" onclick="confirmGoToHome()">Yes, Exit</button>
+      <button class="nav-btn red" onclick="closeHomeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

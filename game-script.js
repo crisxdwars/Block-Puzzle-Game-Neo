@@ -247,6 +247,7 @@ function handleAnswer(chosen, correct, btn) {
     result.textContent = '✓ CORRECT!';
     result.className = 'quiz-result show';
     score += 50;
+    level++; // Increase level on correct answer
     updateUI();
     setTimeout(() => {
       closeQuiz();
@@ -431,7 +432,6 @@ function renderNext() {
 function updateUI() {
   document.getElementById('score').textContent = score;
   document.getElementById('lines').textContent = lines;
-  level = Math.floor(lines / 10) + 1;
   document.getElementById('level').textContent = level;
   updateDiffBadge();
 }
@@ -472,10 +472,16 @@ async function saveScoreToDatabase() {
 //  NAVIGATION
 // ═══════════════════════════════════════════════
 window.goToHome = function() {
-  if (confirm('Are you sure you want to exit the game?')) {
-    pauseGame();
-    window.location.href = 'index.html';
-  }
+  document.getElementById('home-overlay').classList.add('active');
+};
+
+window.closeHomeConfirm = function() {
+  document.getElementById('home-overlay').classList.remove('active');
+};
+
+window.confirmGoToHome = function() {
+  pauseGame();
+  window.location.href = 'index.html';
 };
 
 // ═══════════════════════════════════════════════

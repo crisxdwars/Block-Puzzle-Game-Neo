@@ -78,17 +78,20 @@ if ($method === 'POST') {
         foreach ($required as $field) {
             if (empty($data[$field])) {
                 jsonResponse(['error' => "Missing required field: $field"], 400);
+                exit;
             }
         }
         
         // Validate username format (alphanumeric, 3-20 chars)
         if (!preg_match('/^[a-zA-Z0-9_]{3,20}$/', $data['username'])) {
             jsonResponse(['error' => 'Username must be 3-20 characters and contain only letters, numbers, and underscores'], 400);
+            exit;
         }
         
         // Validate password length
         if (strlen($data['password']) < 6) {
             jsonResponse(['error' => 'Password must be at least 6 characters'], 400);
+            exit;
         }
         
         // Check if username already exists
@@ -96,6 +99,7 @@ if ($method === 'POST') {
         $stmt->execute([$data['username']]);
         if ($stmt->fetch()) {
             jsonResponse(['error' => 'Username already taken'], 409);
+            exit;
         }
         
         // Hash password
@@ -131,6 +135,7 @@ if ($method === 'POST') {
         
         if (empty($username) || empty($password)) {
             jsonResponse(['error' => 'Username and password required'], 400);
+            exit;
         }
         
         $stmt = $db->prepare('SELECT id, username, name, strand, password, created_at, games_played, total_score, high_score FROM users WHERE LOWER(username) = LOWER(?)');
@@ -139,11 +144,13 @@ if ($method === 'POST') {
         
         if (!$user) {
             jsonResponse(['error' => 'Account not found. Please sign up first.'], 404);
+            exit;
         }
         
         // Verify password
         if (!password_verify($password, $user['password'])) {
             jsonResponse(['error' => 'Invalid password'], 401);
+            exit;
         }
         
         // Remove password from response
@@ -161,6 +168,7 @@ if ($method === 'POST') {
         jsonResponse(['user' => $user, 'message' => 'Login successful']);
     } else {
         jsonResponse(['error' => 'Invalid action. Use: create or login'], 400);
+        exit;
     }
 }
 
@@ -174,6 +182,7 @@ if ($method === 'PUT') {
     
     if (empty($userId) || empty($sessionToken)) {
         jsonResponse(['error' => 'User ID and session token required'], 400);
+        exit;
     }
     
     // Verify session
@@ -184,6 +193,7 @@ if ($method === 'PUT') {
     $stmt->execute([$sessionToken]);
     if (!$stmt->fetch()) {
         jsonResponse(['error' => 'Invalid or expired session'], 401);
+        exit;
     }
     
     // Update user
@@ -200,6 +210,7 @@ if ($method === 'PUT') {
     
     if (empty($updates)) {
         jsonResponse(['error' => 'No valid fields to update'], 400);
+        exit;
     }
     
     $values[] = $userId;
@@ -223,6 +234,7 @@ if ($method === 'DELETE') {
     
     if (empty($sessionToken)) {
         jsonResponse(['error' => 'Session token required'], 400);
+        exit;
     }
     
     $stmt = $db->prepare('DELETE FROM sessions WHERE session_token = ?');

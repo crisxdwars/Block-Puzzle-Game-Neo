@@ -2,7 +2,10 @@
 <html lang="en" ondragstart="return false" oncontextmenu="return false">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0a0a1a"/>
 <title>Block Puzzle Game</title>
 <link rel="stylesheet" href="game-style.css">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -19,12 +22,12 @@
 <!-- GAME SCREEN -->
 <div class="screen active" id="game-screen">
   <div class="game-wrapper">
-    <div style="display:flex;justify-content:space-between;width:100%;max-width:590px;align-items:center">
-      <div class="game-title">BLOCK PUZZLE <span>GAME</span></div>
-      <button class="btn-home" onclick="goToHome()">⏎ Home</button>
+    <div class="game-header">
+      <div class="game-title">BLOCK PUZZLE <span>GAME!</span></div>
+      <button class="btn-home" onclick="goToHome()">Home!</button>
     </div>
     <div class="game-row">
-      <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="stats-panel">
         <div class="panel">
           <div class="panel-title">Score</div>
           <div class="panel-value" id="score">0</div>
@@ -38,10 +41,10 @@
         <div class="panel">
           <div class="panel-title">Level</div>
           <div class="panel-value" id="level">1</div>
-          <div class="panel-sub">Speed ↑</div>
+          <div class="panel-sub">Speed &#8593;</div>
         </div>
       </div>
-      
+
       <div class="board-wrap" id="board-wrap">
         <div id="game-board"></div>
         <div class="overlay hidden" id="start-overlay">
@@ -51,14 +54,14 @@
         </div>
         <div class="overlay hidden" id="gameover-overlay">
           <h2 class="gameover">GAME OVER</h2>
-          <p id="go-reason" style="color:var(--neon-pink);font-size:.68rem"></p>
+          <p id="go-reason" style="color:#ff2d95;font-size:.68rem"></p>
           <p style="margin-bottom:6px">Score: <span id="go-score" style="color:#fff;font-weight:bold">0</span> &nbsp; Lines: <span id="go-lines" style="color:#fff">0</span></p>
-          <p style="font-size:.62rem;color:var(--neon-green);margin-bottom:12px">Score automatically saved to leaderboard!</p>
+          <p style="font-size:.62rem;color:#39ff14;margin-bottom:12px">Score automatically saved to leaderboard!</p>
           <button class="btn-start" onclick="startGame()">Restart</button>
         </div>
       </div>
-      
-      <div style="display:flex;flex-direction:column;gap:10px">
+
+      <div class="side-panel">
         <div class="panel">
           <div class="panel-title">Next</div>
           <div id="next-board"></div>
@@ -69,9 +72,9 @@
         </div>
         <div class="panel controls-panel">
           <div class="panel-title">Controls</div>
-          <div class="ctrl-row"><span class="ctrl-key">←→</span> Move</div>
-          <div class="ctrl-row"><span class="ctrl-key">↑</span> Rotate</div>
-          <div class="ctrl-row"><span class="ctrl-key">↓</span> Soft Drop</div>
+          <div class="ctrl-row"><span class="ctrl-key">&#8592; &#8594;</span> Move</div>
+          <div class="ctrl-row"><span class="ctrl-key">&#8593;</span> Rotate</div>
+          <div class="ctrl-row"><span class="ctrl-key">&#8595;</span> Soft Drop</div>
           <div class="ctrl-row"><span class="ctrl-key">Spc</span> Hard Drop</div>
         </div>
       </div>
@@ -95,16 +98,22 @@
     <div class="quiz-question" id="quiz-question"></div>
     <div class="quiz-options" id="quiz-options"></div>
     <div class="quiz-result" id="quiz-result"></div>
+    <!-- SOLUTION BOX: shown after every answer and on time-up -->
+    <div class="quiz-solution hidden" id="quiz-solution">
+      <div class="quiz-solution-label">Solution!!</div>
+      <div class="quiz-solution-text" id="quiz-solution-text"></div>
+    </div>
   </div>
 </div>
 
 <script src="Database.js"></script>
 <script src="game-script.js"></script>
+
 <!-- HOME CONFIRMATION MODAL -->
 <div class="modal-overlay hidden" id="home-overlay">
   <div class="home-modal">
     <div class="modal-title">Exit Game</div>
-    <div class="htp-text">Are you sure you want to exit to home? Your current progress will be lost.</div>
+    <div class="htp-text">Are you sure you want to exit to home?</div>
     <div class="modal-actions">
       <button class="nav-btn" onclick="confirmGoToHome()">Yes, Exit</button>
       <button class="nav-btn red" onclick="closeHomeConfirm()">Cancel</button>

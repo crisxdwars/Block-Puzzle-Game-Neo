@@ -1,7 +1,4 @@
-// ═══════════════════════════════════════════════
 //  LOGIN SCRIPT
-// ═══════════════════════════════════════════════
-
 window.switchTab = function(tab) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
@@ -79,7 +76,7 @@ window.handleSignup = async function(e) {
   }
   
   if (!/^[a-zA-Z. ]+$/.test(name)) {
-    showError('signup-error', 'Full name can only contain letters, spaces, and periods');
+    showError('signup-error', 'Fullname can only contain letters not numbers');
     return;
   }
   
@@ -103,7 +100,7 @@ window.handleSignup = async function(e) {
     showSuccess('signup-success', 'Account created successfully! Your account has been created.');
     btn.textContent = 'SUCCESS!';
     
-    // Auto-login after signup
+    // AUTO LOG-IN AFTER SIGN-UP
     setTimeout(async () => {
       btn.textContent = 'LOGGING IN...';
       try {
@@ -115,7 +112,7 @@ window.handleSignup = async function(e) {
         });
         window.location.href = 'index.html';
       } catch (error) {
-        // If auto-login fails, redirect to login
+        // REDIRECT TO LOG_IN 
         btn.textContent = 'CREATE ACCOUNT';
         btn.disabled = false;
         switchTab('login');
@@ -143,9 +140,7 @@ function showSuccess(id, msg) {
   setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ═══════════════════════════════════════════════
-//  CANVAS ANIMATION
-// ═══════════════════════════════════════════════
+//  RAIN BLOCKS ANIMATIONS
 function initCanvas(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -210,9 +205,7 @@ function initCanvas(canvasId) {
   draw();
 }
 
-// ═══════════════════════════════════════════════
-//  INITIALIZE ON PAGE LOAD
-// ═══════════════════════════════════════════════
+// PAGE LOAD AND AUTO-LOGIN CHECK
 window.addEventListener('DOMContentLoaded', async () => {
   const loadingOverlay = document.getElementById('loading-overlay');
   

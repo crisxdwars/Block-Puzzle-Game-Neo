@@ -1,12 +1,7 @@
-// ═══════════════════════════════════════════════
 //  HOME SCRIPT
-// ═══════════════════════════════════════════════
-
 let currentUser = null;
 
-// ═══════════════════════════════════════════════
 //  NAVIGATION FUNCTIONS
-// ═══════════════════════════════════════════════
 window.goToGame = function() {
   window.location.href = 'game-index.html';
 };
@@ -45,9 +40,7 @@ window.logout = function() {
   openLogoutConfirm();
 };
 
-// ═══════════════════════════════════════════════
 //  LEADERBOARD
-// ═══════════════════════════════════════════════
 async function renderLeaderboard() {
   const tbody = document.getElementById('lb-body');
   tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">Loading...</td></tr>';
@@ -87,77 +80,7 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
-// ═══════════════════════════════════════════════
-//  CANVAS ANIMATION (BACKUP)
-// ═══════════════════════════════════════════════
-/* function initCanvas(canvasId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-  let blocks = [];
-  const COLORS = ['#00f0ff', '#ff2d95', '#39ff14', '#ffe600', '#ff6a00', '#bf00ff', '#0080ff'];
-  
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  function spawnBlock() {
-    const size = 14 + Math.random() * 18;
-    blocks.push({
-      x: Math.random() * canvas.width,
-      y: -size,
-      size,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      speed: 0.4 + Math.random() * 0.7,
-      rot: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() - .5) * .04,
-      opacity: .15 + Math.random() * .25
-    });
-  }
-  
-  for (let i = 0; i < 18; i++) {
-    spawnBlock();
-    blocks[i].y = Math.random() * canvas.height;
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    blocks.forEach((b, i) => {
-      b.y += b.speed;
-      b.rot += b.rotSpeed;
-      if (b.y > canvas.height + b.size) {
-        blocks.splice(i, 1);
-        spawnBlock();
-        return;
-      }
-      ctx.save();
-      ctx.translate(b.x, b.y);
-      ctx.rotate(b.rot);
-      ctx.globalAlpha = b.opacity;
-      ctx.fillStyle = b.color;
-      ctx.shadowColor = b.color;
-      ctx.shadowBlur = 8;
-      const s = b.size;
-      ctx.fillRect(-s / 2, -s / 2, s, s);
-      ctx.globalAlpha = b.opacity * .4;
-      ctx.fillStyle = 'rgba(255,255,255,.3)';
-      ctx.fillRect(-s / 2, -s / 2, s, s * .18);
-      ctx.restore();
-    });
-    if (Math.random() < .04) spawnBlock();
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-*/
-
-// ==========================================
-//  NEW RAIN SYSTEM
-//===========================================
+// RAIN BLOCKS SYSTEM
 
 function initCanvas(canvasId) {
   const canvas = document.getElementById(canvasId);
@@ -234,9 +157,7 @@ function initCanvas(canvasId) {
   draw();
 }
 
-// ═══════════════════════════════════════════════
-//  INITIALIZE ON PAGE LOAD
-// ═══════════════════════════════════════════════
+//  PAGE LOAD AND LOADING CHECK
 window.addEventListener('DOMContentLoaded', async () => {
   // Check authentication
   const session = DB.session.get();
@@ -244,23 +165,22 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   if (!session) {
     console.log('No session found, redirecting to login');
-    // Not logged in, redirect to login
+    // URL LOG-IN
     window.location.href = 'Login.html';
     return;
   }
   
-  try {
+ try {
     const user = await DB.users.getCurrentUser();
     console.log('User retrieved:', user);
     
     if (!user) {
       console.log('User not found, clearing session');
-      // User not found, clear session and redirect
+      // Users not found and clear session 
       DB.session.clear();
-      window.location.href = 'Login.html';
+       window.location.href = 'Login.html'; 
       return;
-    }
-    
+    }   
     // Set current user
     currentUser = user;
     
@@ -270,11 +190,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Update welcome message
     document.getElementById('home-welcome').textContent = `Welcome, ${currentUser.name}!`;
     
-    // Initialize canvas animation
+    // Home-canvas Animation
     initCanvas('home-canvas');
   } catch (error) {
     console.error('Session validation failed:', error);
     DB.session.clear();
     window.location.href = 'Login.html';
-  }
+  } 
 });

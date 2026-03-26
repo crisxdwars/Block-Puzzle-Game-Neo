@@ -1,7 +1,3 @@
-// ═══════════════════════════════════════════════
-//  REAL DATABASE (PHP/MySQL API Client)
-// ═══════════════════════════════════════════════
-
 // Configure your API base URL here
 const API_BASE_URL = 'api';
 
